@@ -9,6 +9,14 @@ xcaddy build \
     --with github.com/abiosoft/caddy-exec
 ```
 
+### Building with Local Plugin
+
+To build Caddy with a local version of this plugin:
+
+```
+xcaddy build --with caddy.modules/exec=../caddy-exec-stream
+```
+
 ## Usage
 
 Commands can be configured to be triggered globally during startup/shutdown or by via a route.
