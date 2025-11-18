@@ -25,11 +25,14 @@ type Cmd struct {
 
 	// If the command should run in the foreground.
 	// By default, commands run in the background and doesn't
-	// affect Caddy.
+	// affects Caddy.
 	// Setting this makes the command run in the foreground.
 	// Note that failure of a startup command running in the
 	// foreground may prevent Caddy from starting.
 	Foreground bool `json:"foreground,omitempty"`
+
+	// Stream enables Server-Sent Events streaming of command output.
+	Stream bool `json:"stream,omitempty"`
 
 	// Enables pass-thru mode, which continues to the next HTTP
 	// handler in the route instead of responding directly

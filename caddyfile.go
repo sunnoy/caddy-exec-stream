@@ -32,6 +32,7 @@ func newCommandFromDispenser(d *caddyfile.Dispenser) (cmd Cmd, err error) {
 //	    err_log     <log output module>
 //	    foreground
 //	    pass_thru
+//	    stream
 //	    startup
 //	    shutdown
 //	}
@@ -52,6 +53,7 @@ func parseHandlerCaddyfileBlock(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHan
 //	    err_log     <log output module>
 //	    foreground
 //	    pass_thru
+//	    stream
 //	    startup
 //	    shutdown
 //	}
@@ -100,6 +102,7 @@ func parseGlobalCaddyfileBlock(d *caddyfile.Dispenser, prev interface{}) (interf
 //	    err_log     <log output module>
 //	    foreground
 //	    pass_thru
+//	    stream
 //	    startup
 //	    shutdown
 //	}
@@ -140,6 +143,8 @@ func (c *Cmd) unmarshalBlock(d *caddyfile.Dispenser) error {
 			c.Foreground = true
 		case "pass_thru":
 			c.PassThru = true
+		case "stream":
+			c.Stream = true
 		case "startup":
 			c.At = append(c.At, "startup")
 		case "shutdown":
