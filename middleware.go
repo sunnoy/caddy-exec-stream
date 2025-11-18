@@ -2,6 +2,7 @@ package command
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -55,6 +56,11 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	}
 
 	if !m.Stream {
+		// If foreground mode, collect all output and return it
+		if m.Foreground {
+			return m.runAndCollectOutput(w, r, argv, next)
+		}
+
 		err := m.run(argv)
 
 		if m.PassThru {
@@ -158,6 +164,67 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	flusher.Flush()
 
 	return nil
+}
+
+// runAndCollectOutput runs the command in foreground mode, collects all output,
+// and returns it to the client in a single response.
+func (m Middleware) runAndCollectOutput(w http.ResponseWriter, r *http.Request, argv []string, next caddyhttp.Handler) error {
+	if m.PassThru {
+		// In pass-thru mode, just run and continue
+		err := m.run(argv)
+		if err != nil {
+			m.log.Error(err.Error())
+		}
+		return next.ServeHTTP(w, r)
+	}
+
+	ctx := r.Context()
+	if m.timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, m.timeout)
+		defer cancel()
+	}
+
+	cmd := exec.CommandContext(ctx, m.Command, argv...)
+	cmd.Dir = m.Directory
+
+	// Create buffers to collect output
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
+
+	// Start and wait for command to complete
+	err := cmd.Run()
+
+	// Prepare response with collected output
+	var resp struct {
+		Status   string `json:"status,omitempty"`
+		Error    string `json:"error,omitempty"`
+		Stdout   string `json:"stdout,omitempty"`
+		Stderr   string `json:"stderr,omitempty"`
+		ExitCode int    `json:"exit_code,omitempty"`
+	}
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		resp.Error = err.Error()
+		resp.Status = "error"
+		if exitError, ok := err.(*exec.ExitError); ok {
+			resp.ExitCode = exitError.ExitCode()
+		} else {
+			resp.ExitCode = -1
+		}
+	} else {
+		resp.Status = "success"
+		resp.ExitCode = 0
+	}
+
+	// Add collected output
+	resp.Stdout = stdoutBuf.String()
+	resp.Stderr = stderrBuf.String()
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(resp)
 }
 
 // Cleanup implements caddy.Cleanup
