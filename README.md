@@ -1,6 +1,6 @@
 # caddy-exec
 
-Caddy v2 module for running one-off commands.
+Caddy v2 module for running one-off commands with support for real-time output streaming.
 
 ## Installation
 
@@ -29,6 +29,7 @@ exec [<matcher>] [<command> [<args...>]] {
     err_log     <log output module>
     foreground
     pass_thru
+    stream
     startup
     shutdown
 }
@@ -43,6 +44,7 @@ exec [<matcher>] [<command> [<args...>]] {
 - **err_log** - [Caddy log output module](https://caddyserver.com/docs/caddyfile/directives/log#output-modules) for standard error log. Defaults to the value of `log` (standard output log).
 - **foreground** - if present, runs the command in the foreground. For commands at http endpoints, the command will exit before the http request is responded to.
 - **pass_thru** - if present, enables pass-thru mode, which continues to the next HTTP handler in the route instead of responding directly
+- **stream** - if present, enables Server-Sent Events (SSE) streaming of command output. This is useful for long-running commands where you want to see the output in real-time.
 - **startup** - if present, run the command at startup. Ignored in routes.
 - **shutdown** - if present, run the command at shutdown. Ignored in routes.
 
@@ -68,6 +70,24 @@ route /update {
     }
 }
 ```
+
+#### Streaming Example
+
+For long-running commands where you want to see real-time output, you can use the `stream` option:
+
+```
+route /stream-command {
+    exec long-running-script.sh {
+        stream
+    }
+}
+```
+
+When accessing `/stream-command`, the response will be streamed using Server-Sent Events (SSE) with the following event types:
+- `stdout` - Standard output from the command
+- `stderr` - Standard error from the command
+- `error` - Any error that occurred during command execution
+- `close` - Signal that the command has finished
 
 ### API/JSON
 
@@ -99,6 +119,8 @@ As a top level app for `startup` and `shutdown` commands.
           "foreground": false,
           // [optional] if the middleware should respond directly or pass the request on to the next handler in the route. Default is false.
           "pass_thru": false,
+          // [optional] enable Server-Sent Events streaming of command output. Default is false.
+          "stream": false,
           // [optional] timeout to terminate the command's process. Default is 10s.
           "timeout": "10s",
           // [optional] log output module config for standard output. Default is `stderr` module.
@@ -133,7 +155,7 @@ As an handler within a route.
           "handler": "exec",
           // command to execute
           "command": "git",
-          // command arguments it's also possible to use 
+          // command arguments it's also possible to use
           // caddy variables like {http.request.uuid}
           "args": ["pull", "origin", "master", "# {http.request.uuid}"],
 
@@ -143,6 +165,8 @@ As an handler within a route.
           "foreground": true,
           // [optional] if the middleware should respond directly or pass the request on to the next handler in the route. Default is false.
           "pass_thru": true,
+          // [optional] enable Server-Sent Events streaming of command output. Default is false.
+          "stream": false,
           // [optional] timeout to terminate the command's process. Default is 10s.
           "timeout": "5s",
           // [optional] log output module config for standard output. Default is `stderr` module.
