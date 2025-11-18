@@ -1,3 +1,3 @@
-module caddy.modules/exec
+module github.com/sunnoy/caddy-exec-stream
 
 go 1.19
