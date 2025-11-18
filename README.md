@@ -14,7 +14,7 @@ xcaddy build \
 To build Caddy with a local version of this plugin:
 
 ```
-xcaddy build --with caddy.modules/exec=../caddy-exec-stream
+xcaddy build --with github.com/sunnoy/caddy-exec-stream
 ```
 
 ## Usage
