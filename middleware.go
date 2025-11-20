@@ -198,11 +198,11 @@ func (m Middleware) runAndCollectOutput(w http.ResponseWriter, r *http.Request, 
 
 	// Prepare response with collected output
 	var resp struct {
-		Status   string `json:"status,omitempty"`
+		Status   string `json:"status"`
 		Error    string `json:"error,omitempty"`
-		Stdout   string `json:"stdout,omitempty"`
-		Stderr   string `json:"stderr,omitempty"`
-		ExitCode int    `json:"exit_code,omitempty"`
+		Stdout   string `json:"stdout"`
+		Stderr   string `json:"stderr"`
+		ExitCode int    `json:"exit_code"`
 	}
 
 	if err != nil {
