@@ -61,7 +61,7 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 			return m.runAndCollectOutput(w, r, argv, next)
 		}
 
-		err := m.run(argv)
+		err := m.runWithInput(argv, r.Body)
 
 		if m.PassThru {
 			if err != nil {
@@ -108,6 +108,7 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 
 	cmd := exec.CommandContext(ctx, m.Command, argv...)
 	cmd.Dir = m.Directory
+	cmd.Stdin = r.Body
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -187,6 +188,7 @@ func (m Middleware) runAndCollectOutput(w http.ResponseWriter, r *http.Request, 
 
 	cmd := exec.CommandContext(ctx, m.Command, argv...)
 	cmd.Dir = m.Directory
+	cmd.Stdin = r.Body
 
 	// Create buffers to collect output
 	var stdoutBuf, stderrBuf bytes.Buffer

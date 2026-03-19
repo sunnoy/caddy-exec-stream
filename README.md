@@ -56,6 +56,8 @@ exec [<matcher>] [<command> [<args...>]] {
 - **startup** - if present, run the command at startup. Ignored in routes.
 - **shutdown** - if present, run the command at shutdown. Ignored in routes.
 
+For HTTP-triggered commands, the request body is forwarded to the child process via stdin.
+
 #### Example
 
 `exec` can run at start via the [global](https://caddyserver.com/docs/caddyfile/options) directive.
